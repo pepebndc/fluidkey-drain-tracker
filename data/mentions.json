@@ -1,6 +1,14 @@
 {
  "rows": [
   {
+   "id": "m012",
+   "time": "2026-11-19 20:16",
+   "source": "Telegram",
+   "author": "Fluidkey (official channel t.me/fluidkey)",
+   "summary": "Official update: no unauthorized transactions since 18:05 UTC, when Fluidkey took all services offline; working with SEAL 911 on the investigation and fund tracing; full post-mortem promised; web app and all APIs stay paused; further updates via this channel and individual support chats. No root cause, loss figure or compensation yet.",
+   "url": "https://t.me/fluidkey/83"
+  },
+  {
    "id": "m007",
    "time": "2026-11-19 19:06",
    "source": "X",
@@ -92,7 +100,7 @@
  "meta": [
   {
    "label": "Checked at (UTC)",
-   "value": "2026-11-19T20:14:15Z"
+   "value": "2026-11-19T20:18:53Z"
   },
   {
    "label": "Method",
