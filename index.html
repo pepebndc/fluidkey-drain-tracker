@@ -17,6 +17,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 [hidden]{display:none!important}
 .site-foot{margin-top:28px;color:var(--color-fg-muted);font-size:12.5px;line-height:1.5}
 
+
 .fk-wrap{display:flex;flex-direction:column;gap:var(--cds-gap-lg);font-family:var(--font-anthropic-sans);color:var(--color-fg)}
 .fk-title{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
 .fk-lede{margin:0;max-width:70ch;font-size:var(--cds-font-size-body);line-height:1.5}
@@ -64,6 +65,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 
   <nav class="fk-tabs" id="tabs" role="tablist" aria-label="Views">
     <button class="fk-tab" id="tabbtn-overview" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button class="fk-tab" id="tabbtn-addresses" role="tab" data-tab="addresses" aria-selected="false">Addresses</button>
     <button class="fk-tab" id="tabbtn-flow" role="tab" data-tab="flow" aria-selected="false">Money flow</button>
   </nav>
 
@@ -97,6 +99,19 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
     </div>
   </section>
 
+  <section id="mentions-section">
+    <h2 class="fk-h">Public mentions</h2>
+    <p class="fk-muted">Posts about the incident found on X, Telegram and the web, newest first. These are other people's claims, not verified findings; open the link for the original. An empty table means nothing has been found yet.</p>
+    <div class="fk-scroll">
+      <table class="fk-table" id="mentions-table" data-source="mentions" data-row-key="id">
+        <thead><tr><th data-field="time">Time (UTC)</th><th data-field="source">Source</th><th data-field="author">Account</th><th data-field="summary">What it says</th><th data-field="url">Link</th><th data-field="id">Row id</th></tr></thead>
+        <tbody data-draw="mentionRows"></tbody>
+      </table>
+    </div>
+  </section>
+  </section>
+
+  <section class="fk-wrap" id="addresses" hidden>
   <section id="addresses-section">
     <h2 class="fk-h">Watched addresses</h2>
     <p class="fk-muted">"Parked" means a brand-new address that received funds through Fluidkey's relayer during the attack and has not sent a transaction. "MOVED" means it has. USD uses ETH at $1,780 and counts ETH, USDC and USDT only.</p>
@@ -119,16 +134,6 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
       <table class="fk-table" id="otherchains-table" data-source="otherchains" data-row-key="id">
         <thead><tr><th data-field="chain">Chain</th><th data-field="address">Address</th><th data-field="status">Status</th><th data-field="received">Received</th><th data-field="first_seen">First seen</th><th data-field="holding_now">Holding at scan</th><th data-field="moved_on">Moved on</th><th data-field="notes">Notes</th><th data-field="id">Row id</th></tr></thead>
         <tbody data-draw="otherRows"></tbody>
-      </table>
-    </div>
-  </section>
-  <section id="mentions-section">
-    <h2 class="fk-h">Public mentions</h2>
-    <p class="fk-muted">Posts about the incident found on X, Telegram and the web, newest first. These are other people's claims, not verified findings; open the link for the original. An empty table means nothing has been found yet.</p>
-    <div class="fk-scroll">
-      <table class="fk-table" id="mentions-table" data-source="mentions" data-row-key="id">
-        <thead><tr><th data-field="time">Time (UTC)</th><th data-field="source">Source</th><th data-field="author">Account</th><th data-field="summary">What it says</th><th data-field="url">Link</th><th data-field="id">Row id</th></tr></thead>
-        <tbody data-draw="mentionRows"></tbody>
       </table>
     </div>
   </section>
@@ -271,11 +276,11 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
   // tabs
   function showTab(name){
     document.querySelectorAll('#dash-root .fk-tab').forEach(function(b){ b.setAttribute('aria-selected', b.getAttribute('data-tab') === name ? 'true' : 'false'); });
-    ['overview','flow'].forEach(function(id){ var s = document.getElementById(id); if (s) s.hidden = id !== name; });
+    ['overview','addresses','flow'].forEach(function(id){ var s = document.getElementById(id); if (s) s.hidden = id !== name; });
     try { dash.setLink(name); } catch (e) {}
   }
   document.querySelectorAll('#dash-root .fk-tab').forEach(function(b){ b.addEventListener('click', function(){ showTab(b.getAttribute('data-tab')); }); });
-  if (location.hash === '#flow') showTab('flow');
+  if (location.hash === '#flow' || location.hash === '#addresses') showTab(location.hash.slice(1));
 
   var stateVar = {'Laundered':'var(--color-bad)','Parked':'var(--color-warn)','Owner':'var(--cds-chart-muted)'};
   function layerOf(n){
