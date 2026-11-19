@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fluidkey drain tracker</title>
+<meta name="description" content="Independent on-chain tracker of the 19 November 2026 theft from Fluidkey accounts: totals by chain, attacker addresses, money flow and timeline.">
+<meta name="robots" content="index,follow">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Source+Serif+4:wght@400&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+:root{--color-bg:#fbfaf7;--color-fg:#1c1b19;--color-fg-muted:#625f58;--color-panel:#f2f0ea;--color-border-line:#d9d5ca;--color-ok:#1f7a4d;--color-warn:#a15c00;--color-bad:#b3261e;
+--font-anthropic-sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;--font-anthropic-serif:"Source Serif 4",Georgia,serif;
+--cds-font-size-caption:12.5px;--cds-font-size-body:15px;--cds-font-size-heading:18px;--cds-font-size-title:30px;--cds-font-weight-medium:600;
+--cds-gap-xs:4px;--cds-gap-sm:8px;--cds-gap-md:14px;--cds-gap-lg:26px;--cds-pad-lg:16px;--cds-radius:8px;
+--cds-chart-muted:#a9a59b;--cds-text-secondary:#625f58;--cds-surface-popover:#ffffff;--cds-border:#d9d5ca;--cds-shadow-popover:0 4px 16px rgba(0,0,0,.14);--c1:#2f5d8a;--c2:#b3261e;--c3:#a15c00;--c4:#1f7a4d}
+@media (prefers-color-scheme: dark){:root{color-scheme:dark;--color-bg:#151513;--color-fg:#ecebe6;--color-fg-muted:#a5a299;--color-panel:#1f1e1b;--color-border-line:#37352f;--color-ok:#5fc48f;--color-warn:#e0a24a;--color-bad:#f0766d;--cds-chart-muted:#6c6961;--cds-text-secondary:#a5a299;--cds-surface-popover:#26251f;--cds-border:#37352f;--cds-shadow-popover:0 4px 16px rgba(0,0,0,.5)}}
+html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(--font-anthropic-sans);font-size:14px}
+#dash-root{max-width:1180px;margin:0 auto;padding-block:28px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+[hidden]{display:none!important}
+.site-foot{margin-top:28px;color:var(--color-fg-muted);font-size:12.5px;line-height:1.5}
+
+.fk-wrap{display:flex;flex-direction:column;gap:var(--cds-gap-lg);font-family:var(--font-anthropic-sans);color:var(--color-fg)}
+.fk-title{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
+.fk-lede{margin:0;max-width:70ch;font-size:var(--cds-font-size-body);line-height:1.5}
+.fk-muted{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.fk-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--cds-gap-md)}
+.fk-tile{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-xs);min-width:0}
+.fk-tile-label{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);letter-spacing:.04em;text-transform:uppercase}
+.fk-big{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums}
+.fk-h{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.fk-scroll{overflow-x:auto;border:1px solid var(--color-border-line);border-radius:var(--cds-radius)}
+.fk-table{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.fk-table th,.fk-table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--color-border-line);white-space:nowrap;vertical-align:top}
+.fk-table th{color:var(--color-fg-muted);font-weight:var(--cds-font-weight-medium);background:var(--color-panel)}
+.fk-table td.fk-num,.fk-table th.fk-num{text-align:right}
+.fk-table td.fk-wrapcell{white-space:normal;min-width:220px}
+.fk-addr{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-fg);text-decoration:underline;text-decoration-color:var(--color-border-line)}
+.fk-addr:focus-visible{outline:2px solid var(--color-fg);outline-offset:2px}
+.fk-pill{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid var(--color-border-line);font-size:var(--cds-font-size-caption)}
+.fk-bad{color:var(--color-bad);border-color:var(--color-bad)}
+.fk-warn{color:var(--color-warn);border-color:var(--color-warn)}
+.fk-ok{color:var(--color-ok);border-color:var(--color-ok)}
+.fk-state-bad{color:var(--color-bad)}.fk-state-warn{color:var(--color-warn)}.fk-state-ok{color:var(--color-ok)}
+
+.fk-tabs{display:flex;gap:var(--cds-gap-sm);border-bottom:1px solid var(--color-border-line);flex-wrap:wrap}
+.fk-tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;padding:8px 4px;margin-right:12px;font:inherit;font-size:var(--cds-font-size-body);color:var(--color-fg-muted);cursor:pointer}
+.fk-tab[aria-selected="true"]{color:var(--color-fg);border-bottom-color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.fk-tab:focus-visible{outline:2px solid var(--color-fg);outline-offset:2px}
+.fk-flow{position:relative;min-height:600px;min-width:860px}
+.fk-flow svg{display:block}
+.fk-flow text{font-family:var(--font-anthropic-sans);font-size:12px;fill:var(--color-fg)}
+.fk-flow text.fk-sub{fill:var(--cds-text-secondary);font-size:11px}
+.fk-flow .fk-col{fill:var(--cds-text-secondary);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.fk-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);box-shadow:var(--cds-shadow-popover);border-radius:var(--cds-radius);padding:6px 10px;font-size:var(--cds-font-size-caption);max-width:280px;color:var(--color-fg)}
+.fk-legend{display:flex;gap:var(--cds-gap-md);flex-wrap:wrap;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.fk-swatch{display:inline-block;width:18px;height:6px;border-radius:3px;margin-right:6px;vertical-align:middle}
+</style></head>
+<body><div id="dash-root">
+
+<div class="fk-wrap">
+  <header id="top">
+    <h1 class="fk-title">Fluidkey drain tracker</h1>
+    <p class="fk-lede">About <b data-draw="ledeTotal" data-source="summary" data-field="total_stolen_all" data-row="0">—</b> has been taken from Fluidkey accounts across seven chains since 17:29 UTC on 19 November 2026, and <b data-draw="ledeParked" data-source="summary" data-field="total_parked_all" data-row="0">—</b> of it had not yet been moved on by the attacker. Ethereum balances were last checked at <b data-draw="checkedAt" data-source="summary" data-field="checked_at" data-row="0">—</b> UTC.</p>
+    <p class="fk-muted">Balances and totals are Ethereum mainnet; other chains are listed in their own table from a single scan. Independent on-chain analysis, not an official Fluidkey source.</p>
+  </header>
+
+  <nav class="fk-tabs" id="tabs" role="tablist" aria-label="Views">
+    <button class="fk-tab" id="tabbtn-overview" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button class="fk-tab" id="tabbtn-flow" role="tab" data-tab="flow" aria-selected="false">Money flow</button>
+  </nav>
+
+  <section class="fk-wrap" id="overview">
+
+  <section class="fk-tiles" id="tiles">
+    <div class="fk-tile" id="tile-total"><span class="fk-tile-label">Total stolen, all chains and tokens</span><span class="fk-big" data-draw="totalAll" data-source="summary" data-field="total_stolen_all" data-row="0">—</span><span class="fk-muted">To <span data-draw="totalAddrs" data-source="summary" data-field="total_addresses_all" data-row="0">—</span> attacker addresses on seven chains. <span data-draw="totalParked" data-source="summary" data-field="total_parked_all" data-row="0">—</span> of it has not moved yet.</span></div>
+    <div class="fk-tile" id="tile-parked"><span class="fk-tile-label">Still parked on Ethereum</span><span class="fk-big" data-draw="parkedUsd" data-source="summary" data-field="parked_usd" data-row="0">—</span><span class="fk-muted">Across <span data-draw="parkedN" data-source="summary" data-field="parked_n" data-row="0">—</span> fresh addresses, of which <span data-draw="parkedUsdc" data-source="summary" data-field="parked_usdc" data-row="0">—</span> is USDC</span></div>
+    <div class="fk-tile" id="tile-attacker"><span class="fk-tile-label">Held by confirmed attacker addresses on Ethereum</span><span class="fk-big" data-draw="attackerUsd" data-source="summary" data-field="attacker_held_usd" data-row="0">—</span><span class="fk-muted">Across <span data-draw="attackerN" data-source="summary" data-field="attacker_n" data-row="0">—</span> addresses, mostly already swapped to ETH</span></div>
+  </section>
+
+  <section id="bychain-section">
+    <h2 class="fk-h">Totals by chain</h2>
+    <p class="fk-muted">Everything the Fluidkey relayer delivered to confirmed and suspected attacker addresses since 15:00 UTC, all tokens at spot prices. "Confirmed" is linked on-chain to the attacker; "suspected" matches the pattern only. "Not yet moved" means the receiving address has still sent no transaction; on Base, 259,606 USDC counted as moved was sitting one hop further on at the last scan. Likely owner withdrawals are shown for reference and are not in the stolen total.</p>
+    <div class="fk-scroll">
+      <table class="fk-table" id="bychain-table" data-source="bychain" data-row-key="chain">
+        <thead><tr><th data-field="chain">Chain</th><th class="fk-num" data-field="stolen_usd">Stolen</th><th class="fk-num" data-field="confirmed_usd">Confirmed</th><th class="fk-num" data-field="suspected_usd">Suspected</th><th class="fk-num" data-field="parked_usd">Not yet moved</th><th class="fk-num" data-field="moved_usd">Moved on</th><th class="fk-num" data-field="addresses">Addresses</th><th class="fk-num" data-field="owner_usd">Likely owner withdrawals</th></tr></thead>
+        <tbody data-draw="chainRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="history-section">
+    <h2 class="fk-h">History of actions (UTC, newest first)</h2>
+    <p class="fk-muted">Every relevant step so far: what the attacker did on-chain and what has been done in response. Transaction links open Etherscan.</p>
+    <div class="fk-scroll">
+      <table class="fk-table" id="events-table" data-source="events" data-row-key="time,address">
+        <thead><tr><th data-field="time">Time</th><th data-field="type">Type</th><th data-field="what">What happened</th><th class="fk-num" data-field="usd">USD</th><th data-field="address">Address</th><th data-field="tx">Transaction</th></tr></thead>
+        <tbody data-draw="eventRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="addresses-section">
+    <h2 class="fk-h">Watched addresses</h2>
+    <p class="fk-muted">"Parked" means a brand-new address that received funds through Fluidkey's relayer during the attack and has not sent a transaction. "MOVED" means it has. USD uses ETH at $1,780 and counts ETH, USDC and USDT only.</p>
+    <div class="fk-scroll">
+      <table class="fk-table" id="addresses-table" data-source="addresses" data-row-key="address">
+        <thead><tr>
+          <th data-field="address">Address</th><th data-field="status">Status</th><th data-field="movement">Movement</th>
+          <th class="fk-num" data-field="usd_now">USD now</th><th class="fk-num" data-field="usdc">USDC</th><th class="fk-num" data-field="usdt">USDT</th><th class="fk-num" data-field="eth">ETH</th>
+          <th class="fk-num" data-field="nonce">Txs sent</th><th data-field="usdc_frozen">USDC frozen</th><th data-field="role">Role</th><th data-field="received">Received from Fluidkey accounts</th>
+        </tr></thead>
+        <tbody data-draw="addrRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="otherchains-section">
+    <h2 class="fk-h">Other chains</h2>
+    <p class="fk-muted">Recipients of Fluidkey relayer withdrawals on Base, BNB Chain, Arbitrum, Optimism, Polygon and Gnosis since 15:00 UTC. Balances here are re-read every few cycles, less often than Ethereum, so check the date in Sources before relying on a row. Base is the largest. Twenty-five further chains were checked and have no Fluidkey relayer.</p>
+    <div class="fk-scroll">
+      <table class="fk-table" id="otherchains-table" data-source="otherchains" data-row-key="id">
+        <thead><tr><th data-field="chain">Chain</th><th data-field="address">Address</th><th data-field="status">Status</th><th data-field="received">Received</th><th data-field="first_seen">First seen</th><th data-field="holding_now">Holding at scan</th><th data-field="moved_on">Moved on</th><th data-field="notes">Notes</th><th data-field="id">Row id</th></tr></thead>
+        <tbody data-draw="otherRows"></tbody>
+      </table>
+    </div>
+  </section>
+  <section id="mentions-section">
+    <h2 class="fk-h">Public mentions</h2>
+    <p class="fk-muted">Posts about the incident found on X, Telegram and the web, newest first. These are other people's claims, not verified findings; open the link for the original. An empty table means nothing has been found yet.</p>
+    <div class="fk-scroll">
+      <table class="fk-table" id="mentions-table" data-source="mentions" data-row-key="id">
+        <thead><tr><th data-field="time">Time (UTC)</th><th data-field="source">Source</th><th data-field="author">Account</th><th data-field="summary">What it says</th><th data-field="url">Link</th><th data-field="id">Row id</th></tr></thead>
+        <tbody data-draw="mentionRows"></tbody>
+      </table>
+    </div>
+  </section>
+  </section>
+
+  <section class="fk-wrap" id="flow" hidden>
+    <h2 class="fk-h">Where the money went</h2>
+    <p class="fk-muted">Left to right: funds leave Fluidkey accounts through the relayer, land in receiver addresses, are swapped to ETH by the attacker's swapper and consolidators, and end in two collector addresses. Band width is proportional to USD value. Ethereum mainnet only, with funds bridged in from other chains shown as one source; ETH at $1,780.</p>
+    <div class="fk-legend" id="flow-legend">
+      <span><span class="fk-swatch" style="background:var(--color-bad)"></span>Stolen and already moved or swapped</span>
+      <span><span class="fk-swatch" style="background:var(--color-warn)"></span>Stolen, still parked</span>
+      <span><span class="fk-swatch" style="background:var(--cds-chart-muted)"></span>Likely the owners' own withdrawals</span>
+    </div>
+    <div class="fk-scroll"><div class="fk-flow" id="flow-chart" data-draw="flowChart" data-source="flows"></div></div>
+    <h3 class="fk-h" id="flow-table-title">Every flow in the diagram</h3>
+    <div class="fk-scroll">
+      <table class="fk-table" id="flows-table" data-source="flows" data-row-key="source,target">
+        <thead><tr><th data-field="source">From</th><th data-field="target">To</th><th class="fk-num" data-field="usd">USD</th><th data-field="state">State</th><th data-field="note">Note</th></tr></thead>
+        <tbody data-draw="flowRows"></tbody>
+      </table>
+    </div>
+  </section>
+<p class="site-foot">Data last checked: <span id="site-updated">—</span>. This page reloads its data every minute. Raw data: <a class="fk-addr" href="data/addresses.json">addresses</a>, <a class="fk-addr" href="data/events.json">history</a>, <a class="fk-addr" href="data/flows.json">flows</a>, <a class="fk-addr" href="data/bychain.json">totals</a>, <a class="fk-addr" href="data/otherchains.json">other chains</a>. Independent on-chain analysis; addresses marked suspected are not confirmed. Not affiliated with Fluidkey.</p>
+</div>
+</div>
+<script>
+(function(){
+  var IDS=['summary','addresses','events','flows','bychain','otherchains','mentions'];
+  var store={}, draws=[], meta={};
+  window.dash={
+    colors:['var(--c1)','var(--c2)','var(--c3)','var(--c4)'],
+    data:function(id){ return store[id]||{status:'loading',data:[],columns:[]}; },
+    draw:function(name,fn){ if(typeof fn==='function'){ draws.push([name,fn]); run(name,fn); } else if(!fn){ draws.filter(function(d){return d[0]===name;}).forEach(function(d){run(d[0],d[1]);}); } },
+    onData:function(fn){ try{fn();}catch(e){} },
+    setLink:function(n){ try{ history.replaceState(null,'','#'+n); }catch(e){} },
+    params:function(){return {};}, setParams:function(){}, refresh:function(){ load(); }
+  };
+  function run(name,fn){ document.querySelectorAll('[data-draw="'+name+'"]').forEach(function(el){ try{ fn(el); }catch(e){ console.error(name,e); } }); }
+  function runAll(){ draws.forEach(function(d){ run(d[0],d[1]); }); stamp(); }
+  function stamp(){ var el=document.getElementById('site-updated'); if(!el) return; var m=meta.summary||[]; var c=m.filter(function(x){return /Checked/.test(x.label);})[0]; el.textContent=c?String(c.value).replace('T',' ').replace('Z','')+' UTC':'—'; }
+  function load(){
+    return Promise.all(IDS.map(function(id){
+      return fetch('data/'+id+'.json?t='+Date.now(),{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(j){ store[id]={status:'ok',data:j.rows||[],columns:j.rows&&j.rows[0]?Object.keys(j.rows[0]):[]}; meta[id]=j.meta||[]; })
+        .catch(function(){ if(!store[id]) store[id]={status:'error',data:[],columns:[]}; });
+    })).then(runAll);
+  }
+  window.addEventListener('DOMContentLoaded',function(){
+    load(); setInterval(load,60000);
+    var t; window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(runAll,150); });
+    document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('.fk-tab')) setTimeout(runAll,30); });
+  });
+})();
+</script>
+<script>
+(function(){
+  var usd0 = d3.format('$,.0f'), n2 = d3.format(',.2f'), n0 = d3.format(',.0f');
+  function one(){ var s = dash.data('summary'); return s.status === 'ok' && s.data.length ? s.data[0] : null; }
+  function text(name, f){ dash.draw(name, function(el){ var r = one(); el.textContent = r ? f(r) : '—'; }); }
+  text('checkedAt', function(r){ return String(r.checked_at).replace('T',' ').replace('Z',''); });
+  text('parkedUsd', function(r){ return usd0(r.parked_usd); });
+  text('parkedN', function(r){ return n0(r.parked_n); });
+  text('parkedUsdc', function(r){ return usd0(r.parked_usdc); });
+  text('attackerUsd', function(r){ return usd0(r.attacker_held_usd); });
+  text('attackerN', function(r){ return n0(r.attacker_n); });
+
+  function td(tr, value, cls){ var c = document.createElement('td'); if (cls) c.className = cls; c.textContent = value; tr.appendChild(c); return c; }
+  function addrCell(tr, a){ var c = document.createElement('td'); var l = document.createElement('a'); l.className = 'fk-addr'; l.href = 'https://etherscan.io/address/' + encodeURIComponent(a); l.target = '_blank'; l.rel = 'noopener'; l.textContent = a; c.appendChild(l); tr.appendChild(c); }
+  function pill(tr, value, cls){ var c = document.createElement('td'); if (value) { var p = document.createElement('span'); p.className = 'fk-pill ' + cls; p.textContent = value; c.appendChild(p); } tr.appendChild(c); }
+  var statusCls = {'Attacker (confirmed)':'fk-bad','Suspected attacker':'fk-warn','Likely owner withdrawal':'fk-ok','Contract recipient':''};
+
+  dash.draw('addrRows', function(body){
+    var s = dash.data('addresses'); body.replaceChildren();
+    if (s.status !== 'ok') return;
+    s.data.forEach(function(r){
+      var tr = document.createElement('tr');
+      addrCell(tr, r.address);
+      pill(tr, r.status, statusCls[r.status] || '');
+      pill(tr, r.movement, r.movement === 'MOVED' ? 'fk-bad' : 'fk-warn');
+      td(tr, usd0(+r.usd_now), 'fk-num'); td(tr, n2(+r.usdc), 'fk-num'); td(tr, n2(+r.usdt), 'fk-num'); td(tr, d3.format(',.4f')(+r.eth), 'fk-num');
+      td(tr, n0(+r.nonce), 'fk-num'); td(tr, r.usdc_frozen); td(tr, r.role || '', 'fk-wrapcell'); td(tr, r.received || '', 'fk-wrapcell');
+      body.appendChild(tr);
+    });
+  });
+  var typeCls = {'Theft':'fk-bad','Laundering':'fk-bad','Attacker setup':'fk-warn','Response':'fk-ok','Fluidkey':''};
+  dash.draw('eventRows', function(body){
+    var s = dash.data('events'); body.replaceChildren();
+    if (s.status !== 'ok') return;
+    s.data.forEach(function(r){
+      var tr = document.createElement('tr');
+      td(tr, r.time); pill(tr, r.type, typeCls[r.type] || ''); td(tr, r.what, 'fk-wrapcell'); td(tr, +r.usd ? usd0(+r.usd) : '', 'fk-num');
+      if (r.address) addrCell(tr, r.address); else td(tr, '');
+      var c = document.createElement('td');
+      if (r.tx) { var l = document.createElement('a'); l.className = 'fk-addr'; l.href = 'https://etherscan.io/tx/' + encodeURIComponent(r.tx); l.target = '_blank'; l.rel = 'noopener'; l.textContent = r.tx; c.appendChild(l); }
+      tr.appendChild(c);
+      body.appendChild(tr);
+    });
+  });
+  dash.draw('otherRows', function(body){
+    var s = dash.data('otherchains'); body.replaceChildren();
+    if (s.status !== 'ok') return;
+    s.data.forEach(function(r){
+      var tr = document.createElement('tr');
+      td(tr, r.chain); td(tr, r.address).className = 'fk-addr'; pill(tr, r.status, r.status.indexOf('Suspected') === 0 ? 'fk-warn' : (r.status.indexOf('Likely') === 0 ? 'fk-ok' : ''));
+      td(tr, r.received || '', 'fk-wrapcell'); td(tr, r.first_seen || ''); td(tr, r.holding_now || '', 'fk-wrapcell'); td(tr, r.moved_on); td(tr, r.notes || '', 'fk-wrapcell'); td(tr, r.id, 'fk-muted');
+      body.appendChild(tr);
+    });
+  });
+  text('ledeTotal', function(r){ return usd0(r.total_stolen_all); });
+  text('ledeParked', function(r){ return usd0(r.total_parked_all); });
+  text('totalAll', function(r){ return usd0(r.total_stolen_all); });
+  text('totalAddrs', function(r){ return n0(r.total_addresses_all); });
+  text('totalParked', function(r){ return usd0(r.total_parked_all); });
+  dash.draw('chainRows', function(body){
+    var s = dash.data('bychain'); body.replaceChildren();
+    if (s.status !== 'ok') return;
+    s.data.forEach(function(r){
+      var tr = document.createElement('tr');
+      if (r.chain === 'All chains') tr.style.fontWeight = '600';
+      td(tr, r.chain);
+      ['stolen_usd','confirmed_usd','suspected_usd','parked_usd','moved_usd'].forEach(function(k){ td(tr, usd0(+r[k]), 'fk-num'); });
+      td(tr, n0(+r.addresses), 'fk-num'); td(tr, usd0(+r.owner_usd), 'fk-num');
+      body.appendChild(tr);
+    });
+  });
+
+  dash.draw('mentionRows', function(body){
+    var s = dash.data('mentions'); body.replaceChildren();
+    if (s.status !== 'ok') return;
+    s.data.forEach(function(r){
+      var tr = document.createElement('tr');
+      td(tr, r.time || ''); td(tr, r.source || ''); td(tr, r.author || ''); td(tr, r.summary || '', 'fk-wrapcell');
+      var c = document.createElement('td');
+      if (r.url && /^https:\/\//.test(r.url)) { var l = document.createElement('a'); l.className = 'fk-addr'; l.href = r.url; l.target = '_blank'; l.rel = 'noopener'; l.textContent = r.url; c.appendChild(l); }
+      tr.appendChild(c); td(tr, r.id, 'fk-muted');
+      body.appendChild(tr);
+    });
+  });
+
+  // tabs
+  function showTab(name){
+    document.querySelectorAll('#dash-root .fk-tab').forEach(function(b){ b.setAttribute('aria-selected', b.getAttribute('data-tab') === name ? 'true' : 'false'); });
+    ['overview','flow'].forEach(function(id){ var s = document.getElementById(id); if (s) s.hidden = id !== name; });
+    try { dash.setLink(name); } catch (e) {}
+  }
+  document.querySelectorAll('#dash-root .fk-tab').forEach(function(b){ b.addEventListener('click', function(){ showTab(b.getAttribute('data-tab')); }); });
+  if (location.hash === '#flow') showTab('flow');
+
+  var stateVar = {'Laundered':'var(--color-bad)','Parked':'var(--color-warn)','Owner':'var(--cds-chart-muted)'};
+  function layerOf(n){
+    if (n.indexOf('Fluidkey accounts') === 0 || n.indexOf('Other chains') === 0) return 0;
+    if (n.indexOf('Swapper') === 0 || n.indexOf('Consolidator') === 0) return 2;
+    if (n.indexOf('Collector') === 0) return 3;
+    return 1;
+  }
+  dash.draw('flowChart', function(el){
+    var s = dash.data('flows');
+    el.replaceChildren();
+    if (s.status !== 'ok') { el.textContent = s.status === 'error' ? 'Failed to load' : '—'; return; }
+    var rows = s.data.map(function(r){ return {source:r.source, target:r.target, usd:+r.usd, state:r.state, note:r.note}; });
+    var W = Math.max(el.clientWidth || 0, 860), H = 600, top = 34, nodeW = 12, pad = 14, labelW = 190;
+    var nodes = {}, order = [];
+    function node(n){ if (!nodes[n]) { nodes[n] = {name:n, layer:layerOf(n), inn:0, out:0, ins:[], outs:[]}; order.push(nodes[n]); } return nodes[n]; }
+    rows.forEach(function(l){ var a = node(l.source), b = node(l.target); a.out += l.usd; a.outs.push(l); b.inn += l.usd; b.ins.push(l); });
+    order.forEach(function(n){ n.value = Math.max(n.inn, n.out); n.state = (n.ins[0] || n.outs[0]).state; if (n.layer === 0) n.state = 'Laundered'; });
+    var layers = [0,1,2,3].map(function(i){ return order.filter(function(n){ return n.layer === i; }); });
+    var k = d3.min(layers, function(col){ var tot = d3.sum(col, function(n){ return n.value; }); return tot ? (H - top - pad * (col.length - 1) - 10) / tot : Infinity; });
+    var minH = 3;
+    var x0 = 4, x3 = W - nodeW - labelW;
+    var xs = [x0, x0 + (x3 - x0) * 0.36, x0 + (x3 - x0) * 0.70, x3];
+    layers.forEach(function(col, i){
+      var y = top;
+      col.forEach(function(n){ n.x = xs[i]; n.h = Math.max(minH, n.value * k); n.y = y; y += n.h + pad; n.oy = n.y; n.iy = n.y; });
+    });
+    var svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H).attr('role', 'img')
+      .attr('aria-label', 'Flow diagram of stolen funds from Fluidkey accounts through receiver addresses, swapper and consolidators to two collector addresses');
+    ['Source','Receivers','Swapped to ETH','Collectors'].forEach(function(t, i){ svg.append('text').attr('class','fk-col').attr('x', xs[i]).attr('y', 14).text(t); });
+    var tip = d3.select(el).append('div').attr('class','fk-tip').attr('hidden', '');
+    var usd0 = d3.format('$,.0f');
+    function showTip(ev, html){ var r = el.getBoundingClientRect(); tip.attr('hidden', null).text(html); var tx = Math.min(ev.clientX - r.left + 12, W - 290), ty = ev.clientY - r.top + 12; tip.style('left', Math.max(0, tx) + 'px').style('top', ty + 'px'); }
+    function hideTip(){ tip.attr('hidden', ''); }
+    var g = svg.append('g').attr('fill', 'none');
+    rows.forEach(function(l){
+      var a = nodes[l.source], b = nodes[l.target], w = Math.max(1.5, l.usd * k);
+      var y1 = a.oy + w / 2, y2 = b.iy + w / 2; a.oy += w; b.iy += w;
+      var xa = a.x + nodeW, xb = b.x, mx = (xa + xb) / 2;
+      g.append('path').attr('d', 'M' + xa + ',' + y1 + 'C' + mx + ',' + y1 + ' ' + mx + ',' + y2 + ' ' + xb + ',' + y2)
+        .attr('stroke-width', w).style('stroke', stateVar[l.state] || 'var(--cds-chart-muted)').style('stroke-opacity', 0.38)
+        .on('mousemove', function(ev){ d3.select(this).style('stroke-opacity', 0.7); showTip(ev, l.source + ' → ' + l.target + ': ' + usd0(l.usd) + (l.note ? '. ' + l.note : '')); })
+        .on('mouseleave', function(){ d3.select(this).style('stroke-opacity', 0.38); hideTip(); });
+    });
+    var lastLabelY = {};
+    order.forEach(function(n){
+      svg.append('rect').attr('x', n.x).attr('y', n.y).attr('width', nodeW).attr('height', n.h).attr('rx', 2).style('fill', n.layer === 0 ? 'var(--color-fg)' : (stateVar[n.state] || 'var(--color-fg)'));
+      var ly = Math.max(n.y + Math.min(n.h / 2, 12) + 2, (lastLabelY[n.layer] || 0) + 26); lastLabelY[n.layer] = ly;
+      var lx = n.x + nodeW + 6;
+      svg.append('text').attr('x', lx).attr('y', ly).text(n.name);
+      svg.append('text').attr('class','fk-sub').attr('x', lx).attr('y', ly + 13).text(usd0(n.value));
+    });
+  });
+  dash.draw('flowRows', function(body){
+    var s = dash.data('flows'); body.replaceChildren();
+    if (s.status !== 'ok') return;
+    s.data.forEach(function(r){
+      var tr = document.createElement('tr');
+      td(tr, r.source); td(tr, r.target); td(tr, usd0(+r.usd), 'fk-num');
+      pill(tr, r.state, r.state === 'Laundered' ? 'fk-bad' : (r.state === 'Parked' ? 'fk-warn' : '')); td(tr, r.note || '', 'fk-wrapcell');
+      body.appendChild(tr);
+    });
+  });
+})();
+</script>
+</body></html>

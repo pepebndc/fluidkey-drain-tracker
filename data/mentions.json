@@ -1,0 +1,102 @@
+{
+ "rows": [
+  {
+   "id": "m007",
+   "time": "2026-11-19 19:06",
+   "source": "X",
+   "author": "@tfortabasco",
+   "summary": "Thread claims accounts were drained on Base and other chains around 17:40-18:05 UTC, with at least ~$270k seen on-chain (unofficial figure); warns about fake 'Fluidkey support' DMs and address poisoning.",
+   "url": "https://x.com/tfortabasco/status/2123493201206288562"
+  },
+  {
+   "id": "m010",
+   "time": "2026-11-19 18:59",
+   "source": "News",
+   "author": "TokenPost",
+   "summary": "Short report repeating Fluidkey's advice to stop using its website and app during the investigation; no cause, loss figures or timeline.",
+   "url": "https://www.tokenpost.com/news/technology/61608"
+  },
+  {
+   "id": "m003",
+   "time": "2026-11-19 18:46",
+   "source": "News",
+   "author": "ChainCatcher",
+   "summary": "Brief citing The Defiant: Fluidkey told users to temporarily stop using its site and app while investigating; no statement on affected funds. Time shown as 02:46 on Nov 20, assumed UTC+8.",
+   "url": "https://www.chaincatcher.com/en/article/2306457"
+  },
+  {
+   "id": "m006",
+   "time": "2026-11-19 18:46",
+   "source": "X",
+   "author": "@DefiantNews",
+   "summary": "Reports Fluidkey told users to avoid its website and app during the investigation; notes the initial notice did not say whether funds were lost.",
+   "url": "https://x.com/DefiantNews/status/2123487975145378208"
+  },
+  {
+   "id": "m011",
+   "time": "2026-11-19 18:46",
+   "source": "News",
+   "author": "Phemex News",
+   "summary": "Repeats Fluidkey's warning to stop using its website and mobile app; says the notice did not disclose whether funds were lost. Timestamp timezone not stated (assumed UTC).",
+   "url": "https://phemex.com/news/article/crypto-wallet-fluidkey-warns-users-to-avoid-platform-amid-security-incident-investigation-104236"
+  },
+  {
+   "id": "m005",
+   "time": "2026-11-19 18:39",
+   "source": "X",
+   "author": "@pcaversaccio (security researcher)",
+   "summary": "Publishes 0xefdA52Af6848Ca8b08153A248B9d2A0bd488d247 as one of the main consolidation addresses so others can keep tracing.",
+   "url": "https://x.com/pcaversaccio/status/2123486417787699481"
+  },
+  {
+   "id": "m009",
+   "time": "2026-11-19 18:36",
+   "source": "X",
+   "author": "@SpikeDaGoad0",
+   "summary": "SCAM: reply recommending an individual account that 'fixes issues like this', a typical fund-recovery scam pitch aimed at victims. Do not contact.",
+   "url": "https://x.com/SpikeDaGoad0/status/2123485610333638985"
+  },
+  {
+   "id": "m008",
+   "time": "2026-11-19 18:35",
+   "source": "X",
+   "author": "Several users (replies to @fluidkey)",
+   "summary": "Replies between about 18:35 and 19:05 UTC from users saying they were drained or are afraid to check; some tag Circle, Base, SEAL and ZachXBT asking for help.",
+   "url": "https://x.com/fluidkey/status/2123481430634492278"
+  },
+  {
+   "id": "m004",
+   "time": "2026-11-19 18:20",
+   "source": "X",
+   "author": "@fluidkey (official)",
+   "summary": "Official X post: aware of a security incident affecting Fluidkey users; recommends not interacting with the website and app while they investigate. Same wording as the Telegram notice.",
+   "url": "https://x.com/fluidkey/status/2123481430634492278"
+  },
+  {
+   "id": "m001",
+   "time": "2026-11-19 18:19",
+   "source": "Telegram",
+   "author": "Fluidkey (official channel t.me/fluidkey, linked from fluidkey.com)",
+   "summary": "Official notice: Fluidkey says it is aware of a security incident affecting users and recommends not interacting with the Fluidkey website and app while it investigates. No root cause, loss figures or compensation mentioned.",
+   "url": "https://t.me/fluidkey/82"
+  },
+  {
+   "id": "m002",
+   "time": "",
+   "source": "News",
+   "author": "The Defiant",
+   "summary": "Reports that Fluidkey urged users to avoid its website and app during an investigation of a security incident; says the notice did not state whether funds were affected.",
+   "url": "https://thedefiant.io/news/security/fluidkey-urges-users-to-avoid-website-and-app-after-incident"
+  }
+ ],
+ "meta": [
+  {
+   "label": "Checked at (UTC)",
+   "value": "2026-11-19T19:34:33Z"
+  },
+  {
+   "label": "Method",
+   "value": "Web search and public channel previews for posts about the Fluidkey incident. Summaries are paraphrased; open the link for the original."
+  }
+ ]
+}
