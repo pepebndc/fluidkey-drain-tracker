@@ -18,6 +18,8 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .site-foot{margin-top:28px;color:var(--color-fg-muted);font-size:12.5px;line-height:1.5}
 
 
+
+
 .fk-wrap{display:flex;flex-direction:column;gap:var(--cds-gap-lg);font-family:var(--font-anthropic-sans);color:var(--color-fg)}
 .fk-title{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
 .fk-lede{margin:0;max-width:70ch;font-size:var(--cds-font-size-body);line-height:1.5}
@@ -53,6 +55,11 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 .fk-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);box-shadow:var(--cds-shadow-popover);border-radius:var(--cds-radius);padding:6px 10px;font-size:var(--cds-font-size-caption);max-width:280px;color:var(--color-fg)}
 .fk-legend{display:flex;gap:var(--cds-gap-md);flex-wrap:wrap;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
 .fk-swatch{display:inline-block;width:18px;height:6px;border-radius:3px;margin-right:6px;vertical-align:middle}
+
+.fk-chart{position:relative;min-height:340px;min-width:640px}
+.fk-chart svg{display:block}
+.fk-chart text{font-family:var(--font-anthropic-sans);font-size:11px;fill:var(--cds-text-secondary)}
+.fk-chart .fk-endlabel{fill:var(--color-fg);font-size:12px}
 </style></head>
 <body><div id="dash-root">
 
@@ -67,6 +74,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
     <button class="fk-tab" id="tabbtn-overview" role="tab" data-tab="overview" aria-selected="true">Overview</button>
     <button class="fk-tab" id="tabbtn-addresses" role="tab" data-tab="addresses" aria-selected="false">Addresses</button>
     <button class="fk-tab" id="tabbtn-flow" role="tab" data-tab="flow" aria-selected="false">Money flow</button>
+    <button class="fk-tab" id="tabbtn-timeline" role="tab" data-tab="timeline" aria-selected="false">Over time</button>
   </nav>
 
   <section class="fk-wrap" id="overview">
@@ -156,12 +164,35 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
       </table>
     </div>
   </section>
-<p class="site-foot">Data last checked: <span id="site-updated">—</span>. This page reloads its data every minute. Raw data: <a class="fk-addr" href="data/addresses.json">addresses</a>, <a class="fk-addr" href="data/events.json">history</a>, <a class="fk-addr" href="data/flows.json">flows</a>, <a class="fk-addr" href="data/bychain.json">totals</a>, <a class="fk-addr" href="data/otherchains.json">other chains</a>. Independent on-chain analysis; addresses marked suspected are not confirmed. Not affiliated with Fluidkey.</p>
+
+  <section class="fk-wrap" id="timeline" hidden>
+    <h2 class="fk-h" id="held-title">What the attacker addresses hold, by asset</h2>
+    <p class="fk-muted">Value sitting in the tracked attacker addresses on all chains at each point in time, split by asset. The stablecoin bands shrink and the ETH band grows as the stolen USDC and USDT are swapped. The line is the running total drained, so a gap between the line and the top of the bands is money in transit or outside the tracked addresses. Five-minute steps, UTC, 19 November 2026.</p>
+    <div class="fk-legend" id="time-legend">
+      <span><span class="fk-swatch" data-draw="swUsdc"></span>USDC</span>
+      <span><span class="fk-swatch" data-draw="swUsdt"></span>USDT</span>
+      <span><span class="fk-swatch" data-draw="swEth"></span>ETH and WETH</span>
+      <span><span class="fk-swatch" data-draw="swOther"></span>Other tokens</span>
+      <span><span class="fk-swatch" style="background:var(--color-fg);height:2px"></span>Total drained so far</span>
+    </div>
+    <div class="fk-scroll"><div class="fk-chart" id="held-chart" data-draw="heldChart" data-source="timeline"></div></div>
+    <h2 class="fk-h" id="drained-title">Funds drained, by the asset taken</h2>
+    <p class="fk-muted">Running total of what was taken from Fluidkey accounts, by the asset it was in when it left the account.</p>
+    <div class="fk-scroll"><div class="fk-chart" id="drained-chart" data-draw="drainedChart" data-source="timeline"></div></div>
+    <h3 class="fk-h" id="time-table-title">The numbers behind both charts</h3>
+    <div class="fk-scroll">
+      <table class="fk-table" id="timeline-table" data-source="timeline" data-row-key="ts">
+        <thead><tr><th data-field="time">Time (UTC)</th><th class="fk-num" data-field="drained_total">Drained so far</th><th class="fk-num" data-field="held_usdc">Held USDC</th><th class="fk-num" data-field="held_usdt">Held USDT</th><th class="fk-num" data-field="held_eth">Held ETH</th><th class="fk-num" data-field="held_other">Held other</th><th class="fk-num" data-field="held_total">Held total</th><th class="fk-num" data-field="drained_usdc">Drained as USDC</th><th class="fk-num" data-field="drained_usdt">Drained as USDT</th><th class="fk-num" data-field="drained_eth">Drained as ETH</th><th class="fk-num" data-field="drained_other">Drained as other</th><th data-field="ts">Unix time</th></tr></thead>
+        <tbody data-draw="timeRows"></tbody>
+      </table>
+    </div>
+  </section>
+<p class="site-foot">Data last checked: <span id="site-updated">—</span>. This page reloads its data every minute. Raw data: <a class="fk-addr" href="data/addresses.json">addresses</a>, <a class="fk-addr" href="data/events.json">history</a>, <a class="fk-addr" href="data/flows.json">flows</a>, <a class="fk-addr" href="data/bychain.json">totals</a>, <a class="fk-addr" href="data/timeline.json">over time</a>, <a class="fk-addr" href="data/otherchains.json">other chains</a>. Independent on-chain analysis; addresses marked suspected are not confirmed. Not affiliated with Fluidkey.</p>
 </div>
 </div>
 <script>
 (function(){
-  var IDS=['summary','addresses','events','flows','bychain','otherchains','mentions'];
+  var IDS=['summary','addresses','events','flows','bychain','otherchains','mentions','timeline'];
   var store={}, draws=[], meta={};
   window.dash={
     colors:['var(--c1)','var(--c2)','var(--c3)','var(--c4)'],
@@ -276,11 +307,11 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
   // tabs
   function showTab(name){
     document.querySelectorAll('#dash-root .fk-tab').forEach(function(b){ b.setAttribute('aria-selected', b.getAttribute('data-tab') === name ? 'true' : 'false'); });
-    ['overview','addresses','flow'].forEach(function(id){ var s = document.getElementById(id); if (s) s.hidden = id !== name; });
+    ['overview','addresses','flow','timeline'].forEach(function(id){ var s = document.getElementById(id); if (s) s.hidden = id !== name; });
     try { dash.setLink(name); } catch (e) {}
   }
   document.querySelectorAll('#dash-root .fk-tab').forEach(function(b){ b.addEventListener('click', function(){ showTab(b.getAttribute('data-tab')); }); });
-  if (location.hash === '#flow' || location.hash === '#addresses') showTab(location.hash.slice(1));
+  if (location.hash === '#flow' || location.hash === '#addresses' || location.hash === '#timeline') showTab(location.hash.slice(1));
 
   var stateVar = {'Laundered':'var(--color-bad)','Parked':'var(--color-warn)','Owner':'var(--cds-chart-muted)'};
   function layerOf(n){
@@ -341,6 +372,56 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
       var tr = document.createElement('tr');
       td(tr, r.source); td(tr, r.target); td(tr, usd0(+r.usd), 'fk-num');
       pill(tr, r.state, r.state === 'Laundered' ? 'fk-bad' : (r.state === 'Parked' ? 'fk-warn' : '')); td(tr, r.note || '', 'fk-wrapcell');
+      body.appendChild(tr);
+    });
+  });
+  // over time
+  var seriesColor = [dash.colors[0], dash.colors[3] || dash.colors[1], dash.colors[1], 'var(--cds-chart-muted)'];
+  ['swUsdc','swUsdt','swEth','swOther'].forEach(function(n, i){ dash.draw(n, function(el){ el.style.background = seriesColor[i]; }); });
+  function stackChart(el, keys, names, lineKey, label){
+    var s = dash.data('timeline'); el.replaceChildren();
+    if (s.status !== 'ok' || !s.data.length) { el.textContent = s.status === 'error' ? 'Failed to load' : '—'; return; }
+    var rows = s.data.map(function(r){ var o = {t: new Date(+r.ts * 1000), time: r.time}; keys.concat(lineKey ? [lineKey] : []).forEach(function(k){ o[k] = +r[k] || 0; }); return o; });
+    var W = Math.max(el.clientWidth || 0, 640), H = 340, m = {t: 14, r: 132, b: 26, l: 56};
+    var x = d3.scaleUtc().domain(d3.extent(rows, function(d){ return d.t; })).range([m.l, W - m.r]);
+    var top = d3.max(rows, function(d){ return Math.max(d3.sum(keys, function(k){ return d[k]; }), lineKey ? d[lineKey] : 0); }) || 1;
+    var y = d3.scaleLinear().domain([0, top * 1.05]).range([H - m.b, m.t]);
+    var svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H).attr('role', 'img').attr('aria-label', label);
+    y.ticks(5).forEach(function(v){
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(v)).attr('y2', y(v)).style('stroke', 'var(--cds-chart-grid, var(--color-border-line))');
+      svg.append('text').attr('x', m.l - 6).attr('y', y(v) + 4).attr('text-anchor', 'end').text(v >= 1e6 ? '$' + d3.format('.1f')(v / 1e6) + 'M' : '$' + d3.format(',.0f')(v / 1e3) + 'k');
+    });
+    x.ticks(d3.utcMinute.every(30)).forEach(function(v){ svg.append('text').attr('x', x(v)).attr('y', H - 8).attr('text-anchor', 'middle').text(d3.utcFormat('%H:%M')(v)); });
+    var stack = d3.stack().keys(keys)(rows);
+    var area = d3.area().x(function(d){ return x(d.data.t); }).y0(function(d){ return y(d[0]); }).y1(function(d){ return y(d[1]); }).curve(d3.curveStepAfter);
+    stack.forEach(function(layer, i){
+      svg.append('path').attr('d', area(layer)).style('fill', seriesColor[i]).style('fill-opacity', 0.78).style('stroke', 'var(--color-bg)').style('stroke-width', 0.5);
+      var last = layer[layer.length - 1], hgt = y(last[0]) - y(last[1]);
+      if (hgt >= 13) svg.append('text').attr('class', 'fk-endlabel').attr('x', W - m.r + 6).attr('y', (y(last[0]) + y(last[1])) / 2 + 4).text(names[i] + ' ' + usd0(last[1] - last[0]));
+    });
+    if (lineKey) svg.append('path').attr('d', d3.line().x(function(d){ return x(d.t); }).y(function(d){ return y(d[lineKey]); }).curve(d3.curveStepAfter)(rows)).style('fill', 'none').style('stroke', 'var(--color-fg)').style('stroke-width', 1.5);
+    var guide = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--color-fg-muted)').style('stroke-dasharray', '3 3').attr('hidden', '');
+    var tip = d3.select(el).append('div').attr('class', 'fk-tip').attr('hidden', '');
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).style('fill', 'transparent')
+      .on('mousemove', function(ev){
+        var px = d3.pointer(ev)[0], t = x.invert(px), i = Math.max(0, d3.bisector(function(d){ return d.t; }).right(rows, t) - 1), d = rows[i];
+        guide.attr('hidden', null).attr('x1', x(d.t)).attr('x2', x(d.t));
+        var lines = [d.time + ' UTC'].concat(keys.map(function(k, j){ return names[j] + ': ' + usd0(d[k]); }));
+        if (lineKey) lines.push('Drained so far: ' + usd0(d[lineKey]));
+        tip.attr('hidden', null).text(lines.join(' · ')).style('left', Math.min(Math.max(0, px + 12), W - 290) + 'px').style('top', '8px');
+      })
+      .on('mouseleave', function(){ guide.attr('hidden', ''); tip.attr('hidden', ''); });
+  }
+  dash.draw('heldChart', function(el){ stackChart(el, ['held_usdc','held_usdt','held_eth','held_other'], ['USDC','USDT','ETH','Other'], 'drained_total', 'Stacked area chart of the value held in attacker addresses over time by asset, with a line for total drained'); });
+  dash.draw('drainedChart', function(el){ stackChart(el, ['drained_usdc','drained_usdt','drained_eth','drained_other'], ['USDC','USDT','ETH','Other'], null, 'Stacked area chart of cumulative funds drained over time by the asset taken'); });
+  dash.draw('timeRows', function(body){
+    var s = dash.data('timeline'); body.replaceChildren();
+    if (s.status !== 'ok') return;
+    s.data.slice().reverse().forEach(function(r){
+      var tr = document.createElement('tr');
+      td(tr, r.time);
+      ['drained_total','held_usdc','held_usdt','held_eth','held_other','held_total','drained_usdc','drained_usdt','drained_eth','drained_other'].forEach(function(k){ td(tr, usd0(+r[k]), 'fk-num'); });
+      td(tr, String(r.ts), 'fk-muted');
       body.appendChild(tr);
     });
   });
