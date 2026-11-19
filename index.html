@@ -20,6 +20,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 
 
 
+
 .fk-wrap{display:flex;flex-direction:column;gap:var(--cds-gap-lg);font-family:var(--font-anthropic-sans);color:var(--color-fg)}
 .fk-title{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
 .fk-lede{margin:0;max-width:70ch;font-size:var(--cds-font-size-body);line-height:1.5}
@@ -83,6 +84,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
     <div class="fk-tile" id="tile-total"><span class="fk-tile-label">Total stolen, all chains and tokens</span><span class="fk-big" data-draw="totalAll" data-source="summary" data-field="total_stolen_all" data-row="0">—</span><span class="fk-muted">To <span data-draw="totalAddrs" data-source="summary" data-field="total_addresses_all" data-row="0">—</span> attacker addresses on seven chains. <span data-draw="totalParked" data-source="summary" data-field="total_parked_all" data-row="0">—</span> of it has not moved yet.</span></div>
     <div class="fk-tile" id="tile-parked"><span class="fk-tile-label">Still parked on Ethereum</span><span class="fk-big" data-draw="parkedUsd" data-source="summary" data-field="parked_usd" data-row="0">—</span><span class="fk-muted">Across <span data-draw="parkedN" data-source="summary" data-field="parked_n" data-row="0">—</span> fresh addresses, of which <span data-draw="parkedUsdc" data-source="summary" data-field="parked_usdc" data-row="0">—</span> is USDC</span></div>
     <div class="fk-tile" id="tile-attacker"><span class="fk-tile-label">Held by confirmed attacker addresses on Ethereum</span><span class="fk-big" data-draw="attackerUsd" data-source="summary" data-field="attacker_held_usd" data-row="0">—</span><span class="fk-muted">Across <span data-draw="attackerN" data-source="summary" data-field="attacker_n" data-row="0">—</span> addresses, mostly already swapped to ETH</span></div>
+    <div class="fk-tile" id="tile-tornado"><span class="fk-tile-label">Sent into Tornado Cash</span><span class="fk-big" data-draw="tornadoUsd" data-source="summary" data-field="tornado_usd" data-row="0">—</span><span class="fk-muted"><span data-draw="tornadoEth" data-source="summary" data-field="tornado_eth" data-row="0">—</span> ETH deposited into the mixer so far; untraceable on-chain once inside.</span></div>
   </section>
 
   <section id="bychain-section">
@@ -275,6 +277,8 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
   });
   text('ledeTotal', function(r){ return usd0(r.total_stolen_all); });
   text('ledeParked', function(r){ return usd0(r.total_parked_all); });
+  text('tornadoUsd', function(r){ return usd0(+r.tornado_usd || 0); });
+  text('tornadoEth', function(r){ return d3.format(',.2f')(+r.tornado_eth || 0); });
   text('totalAll', function(r){ return usd0(r.total_stolen_all); });
   text('totalAddrs', function(r){ return n0(r.total_addresses_all); });
   text('totalParked', function(r){ return usd0(r.total_parked_all); });
