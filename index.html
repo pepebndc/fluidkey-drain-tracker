@@ -149,7 +149,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
 
   <section class="fk-wrap" id="flow" hidden>
     <h2 class="fk-h">Where the money went</h2>
-    <p class="fk-muted">Left to right: funds leave Fluidkey accounts through the relayer, land in receiver addresses, are swapped to ETH by the attacker's swapper and consolidators, and end in two collector addresses. Band width is proportional to USD value. Ethereum mainnet only, with funds bridged in from other chains shown as one source; ETH at $1,780.</p>
+    <p class="fk-muted">Left to right: funds leave Fluidkey accounts through the relayer, land in receiver addresses, are swapped to ETH by the attacker's swapper and consolidators, land in collector addresses, and from there part of it has gone into Tornado Cash. Band width is proportional to USD value. Ethereum mainnet only, with funds bridged in from other chains shown as one source; ETH at $1,780.</p>
     <div class="fk-legend" id="flow-legend">
       <span><span class="fk-swatch" style="background:var(--color-bad)"></span>Stolen and already moved or swapped</span>
       <span><span class="fk-swatch" style="background:var(--color-warn)"></span>Stolen, still parked</span>
@@ -318,6 +318,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
     if (n.indexOf('Fluidkey accounts') === 0 || n.indexOf('Other chains') === 0) return 0;
     if (n.indexOf('Swapper') === 0 || n.indexOf('Consolidator') === 0) return 2;
     if (n.indexOf('Collector') === 0) return 3;
+    if (n.indexOf('Tornado') === 0 || n.indexOf('Exit') === 0) return 4;
     return 1;
   }
   dash.draw('flowChart', function(el){
@@ -330,18 +331,18 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:
     function node(n){ if (!nodes[n]) { nodes[n] = {name:n, layer:layerOf(n), inn:0, out:0, ins:[], outs:[]}; order.push(nodes[n]); } return nodes[n]; }
     rows.forEach(function(l){ var a = node(l.source), b = node(l.target); a.out += l.usd; a.outs.push(l); b.inn += l.usd; b.ins.push(l); });
     order.forEach(function(n){ n.value = Math.max(n.inn, n.out); n.state = (n.ins[0] || n.outs[0]).state; if (n.layer === 0) n.state = 'Laundered'; });
-    var layers = [0,1,2,3].map(function(i){ return order.filter(function(n){ return n.layer === i; }); });
+    var layers = [0,1,2,3,4].map(function(i){ return order.filter(function(n){ return n.layer === i; }); });
     var k = d3.min(layers, function(col){ var tot = d3.sum(col, function(n){ return n.value; }); return tot ? (H - top - pad * (col.length - 1) - 10) / tot : Infinity; });
     var minH = 3;
     var x0 = 4, x3 = W - nodeW - labelW;
-    var xs = [x0, x0 + (x3 - x0) * 0.36, x0 + (x3 - x0) * 0.70, x3];
+    var xs = [x0, x0 + (x3 - x0) * 0.27, x0 + (x3 - x0) * 0.52, x0 + (x3 - x0) * 0.76, x3];
     layers.forEach(function(col, i){
       var y = top;
       col.forEach(function(n){ n.x = xs[i]; n.h = Math.max(minH, n.value * k); n.y = y; y += n.h + pad; n.oy = n.y; n.iy = n.y; });
     });
     var svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H).attr('role', 'img')
       .attr('aria-label', 'Flow diagram of stolen funds from Fluidkey accounts through receiver addresses, swapper and consolidators to two collector addresses');
-    ['Source','Receivers','Swapped to ETH','Collectors'].forEach(function(t, i){ svg.append('text').attr('class','fk-col').attr('x', xs[i]).attr('y', 14).text(t); });
+    ['Source','Receivers','Swapped to ETH','Collectors','Mixer / exit'].forEach(function(t, i){ svg.append('text').attr('class','fk-col').attr('x', xs[i]).attr('y', 14).text(t); });
     var tip = d3.select(el).append('div').attr('class','fk-tip').attr('hidden', '');
     var usd0 = d3.format('$,.0f');
     function showTip(ev, html){ var r = el.getBoundingClientRect(); tip.attr('hidden', null).text(html); var tx = Math.min(ev.clientX - r.left + 12, W - 290), ty = ev.clientY - r.top + 12; tip.style('left', Math.max(0, tx) + 'px').style('top', ty + 'px'); }
